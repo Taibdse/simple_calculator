@@ -13,9 +13,8 @@ class Calculator extends React.Component {
                 '+-', '0', '.', '='
             ],
             calculationStr: '0',
-            lastSign: '',
-            lastResult: '',
-            signs: ['+', '-', '*', '/', '+-']
+            signs: ['+', '-', '*', '/'],
+            result: ''
         };
     } 
 
@@ -25,21 +24,12 @@ class Calculator extends React.Component {
 
     isSign = (val) =>  this.state.signs.some(sign => sign === val.trim());
 
-    calculateResult = (calculationStr) => {
-        const { signs } = this.state;
-        if(calculationStr === '0') return '0';
-        const arr = calculationStr.replace(new RegExp(''), ' $& ').split(' ');  
-        console.log(arr);
-        if(arr.length <= 1) return arr[0];
-
-        let result = 0;
-        return calculationStr;
-    }
-
     handleClick = (text) => {
-        const {  calculationStr, lastResult } = this.state;
+        const {  calculationStr, result } = this.state;
+        
         let newCalculationStr = calculationStr;
-        let newLastResult = lastResult;
+        let newResult = result;
+
         if(this.isNumber(text)){
             if(calculationStr === '0') newCalculationStr = text;
             else newCalculationStr = calculationStr + text;
@@ -50,40 +40,51 @@ class Calculator extends React.Component {
             } else {
                 newCalculationStr = calculationStr + text;
             }
-            this.setState({ lastSign: text });
         } else if (text === 'C'){
             newCalculationStr = '0';
+            newResult = '';
         } else if (text === '='){
-            
+            try {
+                newResult = eval(calculationStr);
+            } catch (error) {
+                alert('Calculation error!!');
+            }
+        } else if(text === 'back'){
+            if(calculationStr.length === '0') return;
+            newCalculationStr = calculationStr.substring(0, calculationStr.length - 1);
+            if(newCalculationStr === '') newCalculationStr = '0';
+        } else if(text === '.'){
+            if(calculationStr === '0') return;
+            if(!this.isSign(calculationStr[calculationStr.length - 1])){
+                newCalculationStr = calculationStr + '.';
+            }
+        } else if(text === 'CE'){
+            if(calculationStr === '0') return;
+            for(let i = calculationStr.length - 1; i >= 0; i--){
+                if(this.isSign(calculationStr[i])) {
+                    newCalculationStr = calculationStr.substring(0, i + 1);
+                    break;
+                }
+            }
         }
 
-        console.log(this.evil(calculationStr));
-        this.setState({ calculationStr: newCalculationStr });
+        if(newCalculationStr.length > 30) return;
+
+        this.setState({ 
+            calculationStr: newCalculationStr, 
+            result: newResult 
+        });
     }
 
-
-    getDownDisplay = (calculationStr) => {
-        if(calculationStr === '') return '';
-        return calculationStr.substring(calculationStr.lastIndexOf(this.state.lastSign), -1);
-    }
-
-    getUpDisplay = (calculationStr) => {
-        const { lastSign } = this.state;
-        if(calculationStr === '' || lastSign === '') return '';
-        
-        return calculationStr.substring(0, calculationStr.lastIndexOf(lastSign) + 1);
-    }
 
     render() {
-        const { calculationStr } = this.state;
-        const downDisplay = this.getDownDisplay(calculationStr);
-        const upDisplay = this.getUpDisplay(calculationStr);
-
+        const { calculationStr, result } = this.state;
+     
         return (
             <div className="calculator">
                 <div className="display">
-                    <div className="up">{ upDisplay }</div>
-                    <div className="down">{ downDisplay }</div>
+                    <div className="calculation">{ calculationStr }</div>
+                    <div className="result">{ result }</div>
                 </div>
                 <div className="keyboard">
                     { this.state.squares.map((square, index) => (
